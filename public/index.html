@@ -3,197 +3,715 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Game Bắn Máy Bay - Online</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
+    <title>Trận Chiến Máy Bay</title>
     <style>
+      /* CSS Reset and Basic Styling */
+      :root {
+        --bg-color: #1a202c;
+        --primary-color: #2d3748;
+        --secondary-color: #4a5568;
+        --accent-color: #3b82f6;
+        --accent-hover: #2563eb;
+        --text-color: #e2e8f0;
+        --success-color: #10b981;
+        --error-color: #ef4444;
+        --cell-size: clamp(20px, 8vw, 40px);
+        --font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: "Inter", sans-serif;
-        -webkit-tap-highlight-color: transparent;
+        font-family: var(--font-family);
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 1rem;
       }
-      .grid-cell {
-        width: 32px;
-        height: 32px;
-        border: 1px solid #4a5568;
+
+      /* Main Containers */
+      #main-container {
+        width: 100%;
+        max-width: 900px;
+      }
+
+      #lobby-container {
+        background-color: var(--primary-color);
+        padding: 2rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        text-align: center;
+      }
+
+      #game-container {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        width: 100%;
+      }
+
+      /* Typography */
+      h1 {
+        font-size: 2.25rem;
+        margin-bottom: 2rem;
+        font-weight: 600;
+      }
+
+      /* Buttons and Inputs */
+      .btn {
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
         cursor: pointer;
-        transition: background-color 0.2s ease;
-        position: relative;
+        transition: all 0.2s ease-in-out;
+        color: white;
       }
-      @media (max-width: 768px) {
-        .grid-cell {
-          width: min(8vw, 30px);
-          height: min(8vw, 30px);
-        }
+
+      .btn-primary {
+        background-color: var(--accent-color);
+        width: 100%;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--accent-hover);
+      }
+
+      .btn-success {
+        background-color: var(--success-color);
+      }
+
+      .btn-success:hover {
+        filter: brightness(1.1);
+      }
+
+      .input-field {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+        background-color: var(--secondary-color);
+        border: 2px solid transparent;
+        border-radius: 0.5rem;
+        color: var(--text-color);
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      .input-field:focus {
+        border-color: var(--accent-color);
+      }
+
+      /* Lobby specific */
+      .lobby-group {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .divider {
+        margin: 1.5rem 0;
+        font-weight: 500;
+        color: #a0aec0;
+      }
+
+      #room-code-display {
+        margin-top: 1.5rem;
+        font-size: 1.1rem;
+        font-weight: 500;
+        min-height: 2rem;
+      }
+
+      /* Game Board */
+      .boards-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2rem;
+      }
+
+      .board-container {
+        text-align: center;
+      }
+      .board-container h2 {
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+      }
+
+      .grid-board {
+        display: grid;
+        grid-template-columns: repeat(10, var(--cell-size));
+        grid-template-rows: repeat(10, var(--cell-size));
+        border: 2px solid var(--secondary-color);
+        background-color: var(--primary-color);
+      }
+
+      .grid-cell {
+        border: 1px solid var(--secondary-color);
+        transition: background-color 0.2s;
+      }
+
+      /* Cell States */
+      .cell-head {
+        background-color: #f59e0b;
       }
       .cell-placed {
-        background-color: #38a169;
-      }
-      .cell-head {
-        background-color: #e53e3e;
-        font-weight: bold;
-        color: white;
-      }
-      .cell-miss {
-        background-color: #a0aec0;
-      }
-      .cell-hit-body {
-        background-color: #f6ad55;
+        background-color: #60a5fa;
       }
       .cell-hit-head {
-        background-color: #c53030;
-        color: white;
+        background-color: #ef4444;
+      }
+      .cell-hit-body {
+        background-color: #f97316;
+      }
+      .cell-miss {
+        background-color: #6b7280;
       }
       .cell-preview-valid {
-        background-color: rgba(72, 187, 120, 0.5);
+        background-color: rgba(16, 185, 129, 0.5);
       }
       .cell-preview-invalid {
-        background-color: rgba(245, 101, 101, 0.5);
+        background-color: rgba(239, 68, 68, 0.5);
       }
-      .fade-in {
-        animation: fadeIn 0.5s ease-in-out;
+
+      /* Controls */
+      #controls-area {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
       }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(-10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+      #info-panel {
+        padding: 1rem;
+        background-color: var(--primary-color);
+        border-radius: 0.5rem;
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: 500;
+        min-width: 250px;
+      }
+
+      /* Transition Overlay */
+      #transition-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: none; /* Changed from 'flex' */
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+      }
+      #transition-box {
+        background-color: var(--primary-color);
+        padding: 2.5rem;
+        border-radius: 0.75rem;
+        text-align: center;
+        max-width: 400px;
+      }
+      #transition-title {
+        font-size: 1.75rem;
+        margin-bottom: 1rem;
+      }
+      #transition-message {
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        color: #cbd5e1;
+      }
+
+      /* Cursors */
+      .cursor-pointer {
+        cursor: pointer;
+      }
+      .cursor-default {
+        cursor: default;
+      }
+      .cursor-not-allowed {
+        cursor: not-allowed;
       }
     </style>
   </head>
-  <body
-    class="bg-gray-800 text-gray-200 flex flex-col items-center justify-center min-h-screen p-4"
-  >
-    <div id="lobby-container" class="w-full max-w-md mx-auto text-center">
-      <h1 class="text-4xl font-bold text-white mb-8">Trận Chiến Máy Bay</h1>
-      <div class="bg-gray-700 p-8 rounded-xl shadow-2xl">
-        <button
-          id="create-room-btn"
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-xl shadow-lg transition-transform transform hover:scale-105 mb-4"
-        >
+  <body>
+    <div id="main-container">
+      <!-- Lobby Screen -->
+      <div id="lobby-container">
+        <h1>Trận Chiến Máy Bay</h1>
+        <button id="create-room-btn" class="btn btn-primary">
           Tạo Phòng Mới
         </button>
-        <div class="flex items-center my-4">
-          <hr class="flex-grow border-gray-500" />
-          <span class="px-4 text-gray-400">hoặc</span>
-          <hr class="flex-grow border-gray-500" />
-        </div>
-        <div class="flex gap-2">
+        <div class="divider">hoặc</div>
+        <div class="lobby-group">
           <input
             type="text"
             id="room-code-input"
-            placeholder="Nhập mã phòng..."
-            class="flex-grow bg-gray-800 border-2 border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-yellow-400 uppercase"
+            class="input-field"
+            placeholder="NHẬP MÃ PHÒNG..."
           />
-          <button
-            id="join-room-btn"
-            class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transition-transform transform hover:scale-105"
-          >
-            Vào Phòng
-          </button>
+          <button id="join-room-btn" class="btn btn-success">Vào Phòng</button>
         </div>
-        <p id="room-code-display" class="mt-6 text-yellow-300 text-lg h-12"></p>
+        <div id="room-code-display"></div>
+      </div>
+
+      <!-- Game Screen -->
+      <div id="game-container">
+        <div id="info-panel">Hãy đặt máy bay của bạn!</div>
+        <div class="boards-wrapper">
+          <div class="board-container">
+            <h2>BẢNG CỦA BẠN</h2>
+            <div id="my-place-board" class="grid-board"></div>
+          </div>
+          <div class="board-container">
+            <h2>BẢNG CỦA ĐỐI THỦ</h2>
+            <div id="opponent-shoot-board" class="grid-board"></div>
+          </div>
+        </div>
+        <div id="controls-area">
+          <button id="rotate-button" class="btn btn-primary">Xoay</button>
+          <button id="ready-button" class="btn btn-success">Sẵn Sàng</button>
+        </div>
       </div>
     </div>
 
-    <div
-      id="game-container"
-      class="w-full max-w-5xl mx-auto flex-col items-center hidden"
-    >
-      <div class="w-full text-center mb-4">
-        <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">
-          Trận Chiến Máy Bay
-        </h1>
-        <p id="info-panel" class="text-lg md:text-xl text-yellow-300 h-8"></p>
-      </div>
-
-      <div
-        id="boards-area"
-        class="w-full flex flex-col md:flex-row justify-center items-start gap-4 md:gap-8"
-      >
-        <div
-          id="player-view"
-          class="w-full md:w-auto flex flex-col items-center"
-        >
-          <h2 class="text-2xl font-bold mb-2">Bảng của bạn</h2>
-          <div class="flex gap-4">
-            <div>
-              <div id="my-place-board" class="grid grid-cols-10"></div>
-            </div>
-          </div>
-        </div>
-        <div
-          id="opponent-view"
-          class="w-full md:w-auto flex flex-col items-center"
-        >
-          <h2 class="text-2xl font-bold mb-2">Bảng tấn công</h2>
-          <div class="flex gap-4">
-            <div>
-              <div id="opponent-shoot-board" class="grid grid-cols-10"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div id="controls-area" class="mt-4 flex items-center gap-4">
-        <button
-          id="rotate-button"
-          class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M21 2v6h-6"></path>
-            <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
-            <path d="M3 22v-6h6"></path>
-            <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
-          </svg>
-        </button>
-        <button
-          id="ready-button"
-          class="hidden bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105"
-        >
-          Sẵn Sàng
-        </button>
-      </div>
-    </div>
-
-    <div
-      id="transition-overlay"
-      class="hidden fixed inset-0 bg-gray-900 bg-opacity-80 flex flex-col justify-center items-center text-center p-4 z-50"
-    >
-      <div class="bg-gray-700 p-8 rounded-xl shadow-2xl max-w-md">
-        <h2
-          id="transition-title"
-          class="text-3xl font-bold text-white mb-4"
-        ></h2>
-        <p id="transition-message" class="text-lg text-gray-300 mb-6"></p>
-        <button
-          id="transition-button"
-          class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg transition-transform transform hover:scale-105"
-        >
-          OK
-        </button>
+    <!-- Transition/Modal Screen -->
+    <div id="transition-overlay">
+      <div id="transition-box">
+        <h2 id="transition-title"></h2>
+        <p id="transition-message"></p>
+        <button id="transition-button" class="btn btn-primary">OK</button>
       </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/client.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Sửa lỗi: Kết nối tới server. Khi để trống, nó sẽ tự động kết nối đúng địa chỉ.
+        const socket = io();
+
+        const dom = {
+          lobby: document.getElementById("lobby-container"),
+          game: document.getElementById("game-container"),
+          createRoomBtn: document.getElementById("create-room-btn"),
+          joinRoomBtn: document.getElementById("join-room-btn"),
+          roomCodeInput: document.getElementById("room-code-input"),
+          roomCodeDisplay: document.getElementById("room-code-display"),
+          infoPanel: document.getElementById("info-panel"),
+          myPlaceBoard: document.getElementById("my-place-board"),
+          opponentShootBoard: document.getElementById("opponent-shoot-board"),
+          rotateButton: document.getElementById("rotate-button"),
+          readyButton: document.getElementById("ready-button"),
+          controlsArea: document.getElementById("controls-area"),
+          transition: {
+            overlay: document.getElementById("transition-overlay"),
+            title: document.getElementById("transition-title"),
+            message: document.getElementById("transition-message"),
+            button: document.getElementById("transition-button"),
+          },
+        };
+
+        const ROWS = 10;
+        const COLS = 10;
+        const PLANES_TO_PLACE = 3;
+        const DIRECTIONS = ["down", "left", "up", "right"];
+        const BASE_PLANE_SHAPE = [
+          { r: 0, c: 0, t: "H" },
+          { r: 1, c: -1, t: "B" },
+          { r: 1, c: 0, t: "B" },
+          { r: 1, c: 1, t: "B" },
+          { r: 2, c: 0, t: "B" },
+          { r: 3, c: -1, t: "B" },
+          { r: 3, c: 0, t: "B" },
+          { r: 3, c: 1, t: "B" },
+        ];
+
+        let state;
+
+        function resetGame() {
+          state = {
+            roomCode: null,
+            playerIndex: -1,
+            placeBoard: Array.from({ length: ROWS }, () =>
+              Array(COLS).fill(null)
+            ),
+            shootBoard: Array.from({ length: ROWS }, () =>
+              Array(COLS).fill(null)
+            ),
+            planesPlaced: 0,
+            phase: "LOBBY", // LOBBY, PLACE, WAITING, SHOOT, GAMEOVER
+            currentDirection: "down",
+            lastHoveredCell: null,
+            isMyTurn: false,
+          };
+          dom.lobby.style.display = "block";
+          dom.game.style.display = "none";
+          dom.roomCodeDisplay.textContent = "";
+          dom.roomCodeInput.value = "";
+        }
+
+        // --- LOBBY LOGIC ---
+        dom.createRoomBtn.addEventListener("click", () =>
+          socket.emit("createRoom")
+        );
+        dom.joinRoomBtn.addEventListener("click", () => {
+          const roomCode = dom.roomCodeInput.value.trim().toUpperCase();
+          if (roomCode) socket.emit("joinRoom", roomCode);
+        });
+        dom.roomCodeInput.addEventListener("keyup", (e) => {
+          if (e.key === "Enter") dom.joinRoomBtn.click();
+        });
+
+        socket.on("roomCreated", (roomCode) => {
+          state.roomCode = roomCode;
+          state.playerIndex = 0;
+          dom.roomCodeDisplay.textContent = `Mã phòng: ${roomCode}. Đang chờ đối thủ...`;
+        });
+
+        socket.on("gameStart", (data) => {
+          // Sửa lỗi: Xác định đúng playerIndex cho cả hai người chơi
+          const myPlayerInfo = data.players.find((p) => p.id === socket.id);
+          if (myPlayerInfo) {
+            state.playerIndex = myPlayerInfo.playerIndex;
+          }
+
+          dom.lobby.style.display = "none";
+          dom.game.style.display = "flex";
+          state.phase = "PLACE";
+          initGameBoards();
+          updateUI();
+        });
+
+        socket.on("placementTimerStarted", (timeLimit) => {
+          let timeLeft = timeLimit / 1000;
+          updateInfo(`Hãy đặt máy bay! Thời gian còn lại: ${timeLeft}s`);
+          const timerInterval = setInterval(() => {
+            timeLeft--;
+            if (state.phase === "PLACE") {
+              updateInfo(`Hãy đặt máy bay! Thời gian còn lại: ${timeLeft}s`);
+            }
+            if (timeLeft <= 0) {
+              clearInterval(timerInterval);
+            }
+          }, 1000);
+        });
+
+        socket.on("error", (message) => showTransition("Lỗi", message));
+
+        // --- BOARD CREATION ---
+        function initGameBoards() {
+          createBoard(dom.myPlaceBoard, "place");
+          createBoard(dom.opponentShootBoard, "shoot");
+        }
+
+        function createBoard(container, type) {
+          container.innerHTML = "";
+          for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+              const cell = document.createElement("div");
+              cell.classList.add("grid-cell");
+              cell.dataset.row = r;
+              cell.dataset.col = c;
+              cell.dataset.type = type;
+              container.appendChild(cell);
+            }
+          }
+          container.addEventListener("mouseover", handleCellHover);
+          container.addEventListener("mouseout", handleCellMouseOut);
+          container.addEventListener("click", handleCellClick);
+        }
+
+        // --- GAME LOGIC ---
+        function getRotatedShape(direction) {
+          return BASE_PLANE_SHAPE.map((p) => {
+            switch (direction) {
+              case "down":
+                return { r: p.r, c: p.c, t: p.t };
+              case "left":
+                return { r: p.c, c: -p.r, t: p.t };
+              case "up":
+                return { r: -p.r, c: -p.c, t: p.t };
+              case "right":
+                return { r: -p.c, c: p.r, t: p.t };
+            }
+          });
+        }
+
+        function canPlacePlane(board, row, col, shape) {
+          for (const part of shape) {
+            const r = row + part.r;
+            const c = col + part.c;
+            if (
+              r < 0 ||
+              r >= ROWS ||
+              c < 0 ||
+              c >= COLS ||
+              board[r][c] !== null
+            ) {
+              return false;
+            }
+          }
+          return true;
+        }
+
+        function placePlaneOnBoard(board, row, col, shape) {
+          shape.forEach((part) => {
+            board[row + part.r][col + part.c] = part.t;
+          });
+        }
+
+        // --- EVENT HANDLERS ---
+        dom.rotateButton.addEventListener("click", () => {
+          const currentIndex = DIRECTIONS.indexOf(state.currentDirection);
+          state.currentDirection =
+            DIRECTIONS[(currentIndex + 1) % DIRECTIONS.length];
+          if (state.lastHoveredCell) {
+            const { r, c } = state.lastHoveredCell;
+            clearPreview();
+            drawPreview(r, c);
+          }
+        });
+
+        dom.readyButton.addEventListener("click", () => {
+          state.phase = "WAITING";
+          socket.emit("planesPlaced", {
+            roomCode: state.roomCode,
+            placeBoard: state.placeBoard,
+          });
+          updateUI();
+        });
+
+        dom.transition.button.addEventListener("click", () => {
+          dom.transition.overlay.style.display = "none";
+          if (state.phase === "GAMEOVER") {
+            location.reload();
+          }
+        });
+
+        function handleCellClick(e) {
+          const cell = e.target.closest(".grid-cell");
+          if (!cell) return;
+          const r = parseInt(cell.dataset.row);
+          const c = parseInt(cell.dataset.col);
+          const type = cell.dataset.type;
+
+          if (
+            state.phase === "PLACE" &&
+            type === "place" &&
+            state.planesPlaced < PLANES_TO_PLACE
+          ) {
+            const shape = getRotatedShape(state.currentDirection);
+            if (canPlacePlane(state.placeBoard, r, c, shape)) {
+              placePlaneOnBoard(state.placeBoard, r, c, shape);
+              state.planesPlaced++;
+              clearPreview();
+              updateUI();
+            }
+          }
+
+          if (state.phase === "SHOOT" && type === "shoot" && state.isMyTurn) {
+            if (state.shootBoard[r][c] === null) {
+              socket.emit("shoot", {
+                roomCode: state.roomCode,
+                row: r,
+                col: c,
+              });
+            }
+          }
+        }
+
+        function handleCellHover(e) {
+          const cell = e.target.closest(".grid-cell");
+          if (
+            !cell ||
+            state.phase !== "PLACE" ||
+            cell.dataset.type !== "place" ||
+            state.planesPlaced >= PLANES_TO_PLACE
+          )
+            return;
+
+          const r = parseInt(cell.dataset.row);
+          const c = parseInt(cell.dataset.col);
+          state.lastHoveredCell = { r, c };
+          drawPreview(r, c);
+        }
+
+        function handleCellMouseOut() {
+          if (state.phase === "PLACE") clearPreview();
+        }
+
+        // --- SERVER EVENT HANDLERS (Sửa lỗi và bổ sung) ---
+        socket.on("opponentReady", () => updateInfo("Đối thủ đã sẵn sàng!"));
+
+        // Sửa lỗi: Lắng nghe đúng sự kiện và tách riêng
+        socket.on("shootingPhaseStart", () => {
+          state.phase = "SHOOT";
+          showTransition(
+            "Trận Chiến Bắt Đầu!",
+            "Lượt bắn sẽ được quyết định ngay sau đây."
+          );
+          updateUI();
+        });
+
+        socket.on("newTurn", (turnIndex) => {
+          state.isMyTurn = state.playerIndex === turnIndex;
+          updateUI();
+        });
+
+        socket.on("shotResult", ({ shooterIndex, row, col, result }) => {
+          const isMyShot = shooterIndex === state.playerIndex;
+          if (isMyShot) {
+            state.shootBoard[row][col] = result;
+          } else {
+            state.placeBoard[row][col] = result;
+          }
+          updateUI();
+        });
+
+        socket.on("gameOver", (winnerIndex) => {
+          state.phase = "GAMEOVER";
+          const message =
+            winnerIndex === state.playerIndex
+              ? "Bạn đã chiến thắng!"
+              : "Bạn đã thua cuộc.";
+          showTransition("TRÒ CHƠI KẾT THÚC", message, "Chơi Lại");
+        });
+
+        socket.on("opponentLeft", () => {
+          if (state.phase !== "GAMEOVER") {
+            state.phase = "GAMEOVER";
+            showTransition(
+              "Đối Thủ Đã Thoát",
+              "Bạn đã thắng do đối thủ thoát.",
+              "Về Sảnh"
+            );
+          }
+        });
+
+        // --- UI & PREVIEW ---
+        function drawPreview(row, col) {
+          const shape = getRotatedShape(state.currentDirection);
+          const isValid = canPlacePlane(state.placeBoard, row, col, shape);
+          for (const part of shape) {
+            const r = row + part.r;
+            const c = col + part.c;
+            if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+              const cell = dom.myPlaceBoard.querySelector(
+                `[data-row='${r}'][data-col='${c}']`
+              );
+              if (cell)
+                cell.classList.add(
+                  isValid ? "cell-preview-valid" : "cell-preview-invalid"
+                );
+            }
+          }
+        }
+        function clearPreview() {
+          document
+            .querySelectorAll(".grid-cell")
+            .forEach((c) =>
+              c.classList.remove("cell-preview-valid", "cell-preview-invalid")
+            );
+        }
+
+        function updateInfo(text) {
+          dom.infoPanel.textContent = text;
+        }
+
+        function showTransition(title, message, buttonText = "OK") {
+          dom.transition.title.textContent = title;
+          dom.transition.message.textContent = message;
+          dom.transition.button.textContent = buttonText;
+          dom.transition.overlay.style.display = "flex";
+        }
+
+        function renderBoard(container, boardData, type) {
+          for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+              const cell = container.querySelector(
+                `[data-row='${r}'][data-col='${c}']`
+              );
+              if (!cell) continue;
+              cell.className = "grid-cell";
+              const val = boardData[r][c];
+
+              // Sửa lỗi: Hiển thị đúng kết quả bắn trên cả hai bảng
+              switch (val) {
+                case "H":
+                  if (type === "place") cell.classList.add("cell-head");
+                  break;
+                case "B":
+                  if (type === "place") cell.classList.add("cell-placed");
+                  break;
+                case "D":
+                  cell.classList.add("cell-hit-head");
+                  break;
+                case "I":
+                  cell.classList.add("cell-hit-body");
+                  break;
+                case "M":
+                  cell.classList.add("cell-miss");
+                  break;
+              }
+            }
+          }
+        }
+
+        function updateUI() {
+          renderBoard(dom.myPlaceBoard, state.placeBoard, "place");
+          renderBoard(dom.opponentShootBoard, state.shootBoard, "shoot");
+
+          dom.controlsArea.style.display =
+            state.phase === "PLACE" ? "flex" : "none";
+          dom.readyButton.style.display =
+            state.planesPlaced >= PLANES_TO_PLACE ? "block" : "none";
+
+          dom.myPlaceBoard.classList.toggle(
+            "cursor-pointer",
+            state.phase === "PLACE" && state.planesPlaced < PLANES_TO_PLACE
+          );
+          dom.opponentShootBoard.classList.toggle(
+            "cursor-pointer",
+            state.phase === "SHOOT" && state.isMyTurn
+          );
+          dom.opponentShootBoard.classList.toggle(
+            "cursor-not-allowed",
+            state.phase === "SHOOT" && !state.isMyTurn
+          );
+
+          switch (state.phase) {
+            case "PLACE":
+              if (state.planesPlaced < PLANES_TO_PLACE) {
+                // UpdateInfo is handled by timer
+              } else {
+                updateInfo(
+                  `Đã đặt đủ ${PLANES_TO_PLACE} máy bay. Hãy bấm Sẵn Sàng!`
+                );
+              }
+              break;
+            case "WAITING":
+              updateInfo("Đang chờ đối thủ...");
+              break;
+            case "SHOOT":
+              updateInfo(
+                state.isMyTurn
+                  ? "Lượt của bạn! Hãy tấn công."
+                  : "Lượt của đối thủ. Xin chờ..."
+              );
+              break;
+            case "GAMEOVER":
+              updateInfo("TRÒ CHƠI KẾT THÚC!");
+              break;
+          }
+        }
+
+        resetGame();
+      });
+    </script>
   </body>
 </html>
