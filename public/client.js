@@ -215,6 +215,15 @@ document.addEventListener("DOMContentLoaded", () => {
       "Đối thủ của bạn đã đặt xong máy bay. Hãy nhanh lên!"
     );
   });
+  socket.on("shootingPhaseStart", () => {
+    state.phase = "SHOOT";
+    updateUI();
+  });
+
+  socket.on("newTurn", (playerIndex) => {
+    state.isMyTurn = state.playerIndex === playerIndex;
+    updateUI();
+  });
 
   socket.on("startShooting", (startingPlayerIndex) => {
     state.phase = "SHOOT";
